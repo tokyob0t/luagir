@@ -33,7 +33,6 @@ end
 local gir = {}
 gir.__index = gir
 
--- Modificaciones en las funciones del gir
 gir.loadFile = function(self, filepath)
     print_start('Opening file')
     local file = io.open(filepath, 'r')
