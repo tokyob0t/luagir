@@ -1,0 +1,14 @@
+{
+  "diagnostics": {
+    "disable": ["undefined-doc-name"],
+    "libraryFiles": "Opened"
+  },
+  "workspace": {
+    "library": ["/usr/share/lua/5.4/"],
+    "maxPreload": 2000,
+    "preloadFileSize": 1000
+  },
+  "runtime": {
+    "version": "Lua5.4"
+  }
+}
