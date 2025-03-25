@@ -176,7 +176,7 @@ return function(libname)
 
     new_gir.xml = xml
 
-    io.write(string.format('Parsing %s...', libname))
+    print_start(string.format('Parsing %s', libname))
 
     for _, element in ipairs {
         { key = 'bitfield', method = 'addBitfield' },

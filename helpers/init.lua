@@ -18,11 +18,7 @@ h.get_method_params = function(xml, namespace)
         for _, value in ipairs(params) do
             local name, type_name = value._attr.name, h.get_type(value, namespace)
 
-            local nullable = value._attr.nullable == '1'
-            local allow_none = value._attr['allow-none'] == '1'
-
-            -- if nullable and allow_none then
-            if nullable then
+            if value._attr.nullable == '1' then
                 name = ('%s?'):format(name)
             end
 
@@ -58,51 +54,43 @@ end
 ---@param namespace gir
 ---@return "string" | "number" | "boolean" | "nil" | string
 h.get_type = function(xml, namespace)
-    if xml and xml.array then
-        return ('%s[]'):format(h.get_type(xml.array, namespace))
-    elseif xml and xml.type and xml.type.type then
-        if #xml.type.type > 0 then -- HashTable
-            return ('table<%s, %s>'):format(
+    if not xml then
+        return 'nil'
+    end
 
-                h.get_type({ type = xml.type.type[1] }, namespace),
-                h.get_type({ type = xml.type.type[2] }, namespace)
-            )
-        else -- GList / GSList
-            return ('%s[]'):format(h.get_type(xml.type, namespace))
+    if xml.array then
+        return ('%s[]'):format(h.get_type(xml.array, namespace))
+    elseif xml.type then
+        if xml.type.type then
+            return #xml.type.type > 0
+                    and ('table<%s, %s>'):format(
+                        h.get_type({ type = xml.type.type[1] }, namespace),
+                        h.get_type({ type = xml.type.type[2] }, namespace)
+                    )
+                or ('%s[]'):format(h.get_type(xml.type, namespace))
         end
-    elseif xml and xml.type then
+
         local bfield =
             namespace.bitfields[string.format('%s.%s', namespace.name, xml.type._attr.name)]
-
         if bfield then
-            local possible_values = {}
-
+            local possible_values = { bfield.name }
             for _, value in ipairs(bfield.members) do
                 table.insert(possible_values, string.format('"%s"', value[1]))
             end
-
             table.insert(
                 possible_values,
-                string.format('( %s )[]', table.concat(possible_values, ' | '))
+                string.format('table<integer, %s>', table.concat(possible_values, ' | '))
             )
-
-            table.insert(possible_values, 1, bfield.name)
-
             return table.concat(possible_values, ' | ')
         end
 
         local lua_type = LGI_TO_LUA_TYPE[xml.type._attr.name]
-
-        if lua_type then
-            return lua_type
-        elseif string.find(xml.type._attr.name or '', '%.') then
-            return xml.type._attr.name
-        else
-            return string.format('%s.%s', namespace.name, xml.type._attr.name)
-        end
-    else
-        return 'nil'
+        return lua_type
+            or (string.find(xml.type._attr.name or '', '%.') and xml.type._attr.name)
+            or string.format('%s.%s', namespace.name, xml.type._attr.name)
     end
+
+    return 'nil'
 end
 
 h.get_class_parents = function(xml, namespace)
@@ -130,60 +118,69 @@ end
 h.get_class_methods = function(xml, namespace)
     local Method = require('handlers.method')
     local m = {}
+    local method_return_value = {}
 
-    if xml and xml.method and xml.method._attr then
-        xml.method = { xml.method }
-    end
+    for _, key in ipairs { 'method', 'constructor', 'function' } do
+        if xml and xml[key] then
+            if xml[key]._attr then
+                xml[key] = { xml[key] }
+            end
 
-    if xml and xml.method then
-        for _, value in ipairs(xml.method) do
-            table.insert(m, Method.new(value, namespace))
-        end
-    end
+            for _, value in ipairs(xml[key]) do
+                local method = Method.new(value, namespace)
+                table.insert(m, method)
 
-    if xml and xml.constructor and xml.constructor._attr then
-        xml.constructor = { xml.constructor }
-    end
+                if string.find(method.name, '_async$') then
+                    local meth = h.transform_method_async(Method.new(value, namespace))
 
-    if xml and xml.constructor then
-        for _, value in ipairs(xml.constructor) do
-            table.insert(m, Method.new(value, namespace))
-        end
-    end
+                    local method_name = string.gsub(method.name, '_async', '')
 
-    if xml and xml['function'] and xml['function']._attr then
-        xml['function'] = { xml['function'] }
-    end
+                    if method_return_value[method_name] then
+                        meth.return_value = method_return_value[method_name]
+                    end
 
-    if xml and xml['function'] then
-        for _, value in ipairs(xml['function']) do
-            table.insert(m, Method.new(value, namespace))
+                    table.insert(m, meth)
+                else
+                    method_return_value[method.name] = method.return_value
+                end
+            end
         end
     end
 
     return m
 end
 
+---@param method Method
+h.transform_method_async = function(method)
+    method.name = string.format('async_%s', string.sub(method.name, 1, -7)) -- remove '_async'
+
+    local new_params = {}
+
+    for _, value in ipairs(method.parameters) do
+        if
+            not (value[1] == 'io_priority' or value[1] == 'cancellable?' or value[1] == 'callback?')
+        then
+            table.insert(new_params, value)
+        end
+    end
+
+    method.parameters = new_params
+
+    return method
+end
+
 h.get_class_props = function(xml, namespace)
     local Property = require('handlers.prop')
     local p = {}
 
-    if xml and xml.property and xml.property._attr then
-        xml.property = { xml.property }
-    end
-
-    if xml and xml.property then
-        for _, value in ipairs(xml.property) do
-            table.insert(p, Property.new(value, namespace))
-        end
-    end
-    if xml and xml.field and xml.field._attr then
-        xml.field = { xml.field }
-    end
-
-    if xml and xml.field then
-        for _, value in ipairs(xml.field) do
-            table.insert(p, Property.new(value, namespace))
+    for _, key in ipairs { 'property', 'field' } do
+        if xml and xml[key] then
+            if xml[key]._attr then
+                xml[key] = { xml[key] }
+            end
+            for _, value in ipairs(xml[key]) do
+                table.insert(p, Property.new(value, namespace))
+            end
         end
     end
 

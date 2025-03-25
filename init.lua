@@ -32,6 +32,7 @@ LGI_TO_LUA_TYPE = {
     gpointer = 'any',
     ---
     filename = 'string',
+    ['GObject.Callback'] = 'function',
 }
 
 os.execute(string.format('mkdir -p %s', CACHE_PATH))
