@@ -63,31 +63,36 @@ h.get_type = function(xml, namespace)
     elseif xml.type then
         if xml.type.type then
             return #xml.type.type > 0
-                    and ('table<%s, %s>'):format(
-                        h.get_type({ type = xml.type.type[1] }, namespace),
-                        h.get_type({ type = xml.type.type[2] }, namespace)
-                    )
+                and ('table<%s, %s>'):format(
+                    h.get_type({ type = xml.type.type[1] }, namespace),
+                    h.get_type({ type = xml.type.type[2] }, namespace)
+                )
                 or ('%s[]'):format(h.get_type(xml.type, namespace))
         end
 
-        local bfield =
-            namespace.bitfields[string.format('%s.%s', namespace.name, xml.type._attr.name)]
-        if bfield then
-            local possible_values = { bfield.name }
-            for _, value in ipairs(bfield.members) do
-                table.insert(possible_values, string.format('"%s"', value[1]))
-            end
-            table.insert(
-                possible_values,
-                string.format('table<integer, %s>', table.concat(possible_values, ' | '))
-            )
-            return table.concat(possible_values, ' | ')
-        end
+        -- Verificamos que _attr y _attr.name existan antes de usarlos
+        local attr_name = xml.type._attr and xml.type._attr.name
+        if attr_name then
+            local full_name = string.format('%s.%s', namespace.name, attr_name)
+            local bfield = namespace.bitfields[full_name]
 
-        local lua_type = LGI_TO_LUA_TYPE[xml.type._attr.name]
-        return lua_type
-            or (string.find(xml.type._attr.name or '', '%.') and xml.type._attr.name)
-            or string.format('%s.%s', namespace.name, xml.type._attr.name)
+            if bfield then
+                local possible_values = { bfield.name }
+                for _, value in ipairs(bfield.members) do
+                    table.insert(possible_values, string.format('"%s"', value[1]))
+                end
+                table.insert(
+                    possible_values,
+                    string.format('table<integer, %s>', table.concat(possible_values, ' | '))
+                )
+                return table.concat(possible_values, ' | ')
+            end
+
+            local lua_type = LGI_TO_LUA_TYPE[attr_name]
+            return lua_type
+                or (string.find(attr_name, '%.') and attr_name)
+                or string.format('%s.%s', namespace.name, attr_name)
+        end
     end
 
     return 'nil'
