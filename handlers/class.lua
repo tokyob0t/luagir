@@ -74,6 +74,13 @@ Class.toString = function(self)
         table.insert(lines, string.format('---@class %s', self.name))
     end
 
+    table.insert(lines, '---@field protected priv table')
+    table.insert(lines, '---@field _attribute table')
+    table.insert(lines, '---@field _property table')
+    table.insert(lines, '---@field _gtype GObject.GType')
+    table.insert(lines, string.format('---@field _name "%s"', self.name))
+    table.insert(lines, string.format('---@field derive fun(_, subclass: string): %s', self.name))
+
     for _, v in ipairs(self.properties) do
         table.insert(lines, v:toString())
     end

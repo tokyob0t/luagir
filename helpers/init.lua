@@ -61,6 +61,7 @@ h.get_type = function(xml, namespace)
     if xml.array then
         return ('%s[]'):format(h.get_type(xml.array, namespace))
     elseif xml.type then
+        -- Caso: tipo compuesto como table<key, value>
         if xml.type.type then
             return #xml.type.type > 0
                 and ('table<%s, %s>'):format(

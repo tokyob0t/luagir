@@ -1,4 +1,9 @@
-CACHE_PATH = os.getenv('HOME') .. '/.cache/luagir'
+if not os.getenv('LUAGIR_PATH') then
+    CACHE_PATH = os.getenv('HOME') .. '/.cache/luagir'
+else
+    CACHE_PATH = os.getenv('LUAGIR_PATH')
+end
+
 DISABLE_COMMENTS = false
 GIR_PATH = '/usr/share/gir-1.0'
 LGI_TO_LUA_TYPE = {
