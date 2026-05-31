@@ -1,6 +1,6 @@
 ---@diagnostic disable:lowercase-global
 package = 'luagir'
-version = '0.1.0-2'
+version = '0.1.0-3'
 
 source = { url = 'git+https://github.com/tokyob0t/luagir.git' }
 
