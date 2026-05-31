@@ -1,6 +1,6 @@
 ---@diagnostic disable:lowercase-global
 package = 'luagir'
-version = '0.1.0-1'
+version = '0.1.0-2'
 
 source = { url = 'git+https://github.com/tokyob0t/luagir.git' }
 
@@ -30,7 +30,7 @@ build = {
         --- emitters
         ['luagir.emitters'] = 'luagir/emitters/init.lua',
         --- Overrides
-        -- ['luagir.overrides.default'] = 'luagir/overrides/default.lua',
+        ['luagir.overrides.default'] = 'luagir/overrides/default.lua',
         ['luagir.overrides.GLib-2.0'] = 'luagir/overrides/GLib-2.0.lua',
         ['luagir.overrides.Gio-2.0'] = 'luagir/overrides/Gio-2.0.lua',
     },
