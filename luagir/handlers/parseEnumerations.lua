@@ -2,7 +2,7 @@ local xml = require('luagir.utils.xml')
 
 ---@alias luagir.Member { name: string, value: number|string, doc: string? }
 
----@alias luagir.Enum { name: string, cname: string, members: luagir.Member[] }
+---@alias luagir.Enum { name: string, members: luagir.Member[] }
 
 ---@return luagir.Enum[]
 return function(enumerations)
@@ -25,7 +25,6 @@ return function(enumerations)
 
         table.insert(enums, {
             name = enum._attr.name,
-            cname = enum._attr['c:type'],
             members = members,
         })
     end

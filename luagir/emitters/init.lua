@@ -36,16 +36,27 @@ end
 
 ---@param bitfields luagir.Bitfield[]
 function M.emitBitfields(bitfields, docs_enabled)
+    --- TODO: add docs
     for _, bitfield in ipairs(bitfields) do
         SCOPE:append_line()
-        SCOPE:append_line(string.format('---@alias %s.%s', SCOPE.namespace, bitfield.name))
+
+        local name_union = {}
+        local fields = {}
 
         for _, member in ipairs(bitfield.members) do
-            if docs_enabled and member.doc then
-                M.emitDoc(member.doc)
-            end
-            SCOPE:append_line(string.format('---| %q %s', member.name, member.value))
+            table.insert(name_union, string.format('%q', member.name))
+            table.insert(fields, string.format('%s: %s', member.name, member.value))
         end
+
+        SCOPE:append_line(string.format('---@alias %s.%s {', SCOPE.namespace, bitfield.name))
+
+        SCOPE:append_line(string.format('---    [number]: %s,', table.concat(name_union, '|')))
+
+        for i, member in ipairs(bitfield.members) do
+            SCOPE:append_line(string.format('---    %s: %s,', member.name, member.value))
+        end
+
+        SCOPE:append_line('---}')
     end
 end
 
