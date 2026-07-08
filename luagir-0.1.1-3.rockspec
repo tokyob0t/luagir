@@ -1,6 +1,6 @@
 ---@diagnostic disable:lowercase-global
 package = 'luagir'
-version = '0.1.0-3'
+version = '0.1.1-3'
 
 source = { url = 'git+https://github.com/tokyob0t/luagir.git' }
 
@@ -10,10 +10,11 @@ description = {
     license = 'LGPL-2.1',
 }
 
-dependencies = { 'lua >= 5.1', 'xml2lua' }
+dependencies = { 'lua >= 5.1', 'xml2lua', 'argparse' }
 
 build = {
     type = 'builtin',
+    install = { bin = { ['luagir'] = 'bin/init.lua' } },
     modules = {
         ['luagir'] = 'luagir/init.lua',
         ---
@@ -34,6 +35,4 @@ build = {
         ['luagir.overrides.GLib-2.0'] = 'luagir/overrides/GLib-2.0.lua',
         ['luagir.overrides.Gio-2.0'] = 'luagir/overrides/Gio-2.0.lua',
     },
-    install = { bin = { ['luagir'] = 'bin/init.lua' } },
-    build_dependencies = { { 'argparse >= 0.8.1', optional = true } },
 }
